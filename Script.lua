@@ -503,7 +503,8 @@ local function TriggerPlatform()
     elseif PlatformMode == "Target Click" then
         WaitingForTarget = true
     end
-end-- ============================================
+end
+    -- ============================================
 -- Input Handlers
 -- ============================================
 
