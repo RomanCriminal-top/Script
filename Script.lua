@@ -108,15 +108,15 @@ local LastRemoteSend = 0
 
 local function HookRemoteEvent(remote)
     if not remote then return end
-    
+
     local originalFireServer = remote.FireServer
     local originalInvokeServer = remote.InvokeServer
-    
+
     remote.FireServer = function(...)
         if AntiCheatDetected then return end
-        
+
         local args = {...}
-        
+
         for i, arg in ipairs(args) do
             if typeof(arg) == "Vector3" then
                 local noise = Vector3.new(
@@ -134,22 +134,22 @@ local function HookRemoteEvent(remote)
                 args[i] = arg * randomRot
             end
         end
-        
+
         local currentTime = tick()
         if currentTime - LastRemoteSend < 0.05 then
             local delay = 0.05 + math.random() * 0.05
             task.wait(delay)
         end
         LastRemoteSend = tick()
-        
+
         return originalFireServer(remote, unpack(args))
     end
-    
+
     remote.InvokeServer = function(...)
         if AntiCheatDetected then return end
-        
+
         local args = {...}
-        
+
         for i, arg in ipairs(args) do
             if typeof(arg) == "Vector3" then
                 local noise = Vector3.new(
@@ -167,17 +167,17 @@ local function HookRemoteEvent(remote)
                 args[i] = arg * randomRot
             end
         end
-        
+
         local currentTime = tick()
         if currentTime - LastRemoteSend < 0.05 then
             local delay = 0.05 + math.random() * 0.05
             task.wait(delay)
         end
         LastRemoteSend = tick()
-        
+
         return originalInvokeServer(remote, unpack(args))
     end
-    
+
     RemoteHooks[remote.Name] = {
         remote = remote,
         originalFire = originalFireServer,
@@ -200,7 +200,7 @@ local function HookDebugFunctions()
         local original_getinfo = debugLibrary.getinfo
         local original_getlocal = debugLibrary.getlocal
         local original_getupvalue = debugLibrary.getupvalue
-        
+
         debugLibrary.getinfo = function(...)
             local args = {...}
             if type(args[1]) == "number" and args[1] >= 0 then
@@ -208,11 +208,11 @@ local function HookDebugFunctions()
             end
             return original_getinfo(...)
         end
-        
+
         debugLibrary.getlocal = function(...)
             return nil
         end
-        
+
         debugLibrary.getupvalue = function(...)
             return nil
         end
@@ -229,14 +229,14 @@ local Original_JumpPower = 50
 
 local function SpoofHumanoidProperties(humanoid)
     if not humanoid then return end
-    
+
     local original_walkspeed = humanoid.WalkSpeed
     local original_jumppower = humanoid.JumpPower
-    
+
     local metatable = getmetatable(humanoid) or {}
     local old_index = metatable.__index
     local old_newindex = metatable.__newindex
-    
+
     metatable.__index = function(table, key)
         if key == "WalkSpeed" then
             return original_walkspeed
@@ -245,7 +245,7 @@ local function SpoofHumanoidProperties(humanoid)
         end
         return old_index and old_index(table, key) or rawget(table, key)
     end
-    
+
     metatable.__newindex = function(table, key, value)
         if key == "WalkSpeed" then
             original_walkspeed = value
@@ -257,7 +257,7 @@ local function SpoofHumanoidProperties(humanoid)
             old_newindex and old_newindex(table, key, value) or rawset(table, key, value)
         end
     end
-    
+
     setmetatable(humanoid, metatable)
 end
 
@@ -428,31 +428,31 @@ Players.PlayerRemoving:Connect(RemoveESP)
 
 local function GetTargetPart(character)
     if not character then return nil end
-    
+
     local standard = character:FindFirstChild("HumanoidRootPart") 
         or character:FindFirstChild("Head") 
         or character:FindFirstChild("Torso") 
         or character:FindFirstChild("UpperTorso")
     if standard and standard:IsA("BasePart") then return standard end
-    
+
     for _, v in ipairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
             return v
         end
     end
-    
+
     return nil
 end
 
 local function GetClosestPlayerToCenter(screenCenter)
     local closest, shortest = nil, Aimbot_FOV
     local players = Players:GetPlayers()
-    
+
     for i = #players, 2, -1 do
         local j = math.random(i)
         players[i], players[j] = players[j], players[i]
     end
-    
+
     for _, player in ipairs(players) do
         if player ~= LocalPlayer and player.Character then
             local part = GetTargetPart(player.Character)
@@ -486,7 +486,7 @@ local function SpawnPlatformAt(pos)
     platform.Material = Enum.Material.Neon
     platform.Color = GetCurrentColor()
     platform.Parent = Workspace
-    
+
     table.insert(PlatformsQueue, platform)
     if #PlatformsQueue > MaxPlatforms then
         local oldest = table.remove(PlatformsQueue, 1)
@@ -523,7 +523,7 @@ end)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
-    
+
     if input.KeyCode == Enum.KeyCode.End then
         ESP_Enabled = false
         Aimbot_Enabled = false
@@ -539,7 +539,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
         })
         return
     end
-    
+
     if WaitingForTarget and not gpe then
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             if Mouse and Mouse.Hit then
@@ -557,7 +557,7 @@ end)
 local PlatformGui = nil
 local function CreatePlatformGUI()
     if PlatformGui then return end
-    
+
     if CoreGui:FindFirstChild("RomanPlatformGui") then CoreGui.RomanPlatformGui:Destroy() end
     PlatformGui = Instance.new("ScreenGui")
     PlatformGui.Name = "RomanPlatformGui"
@@ -611,11 +611,11 @@ end)
 local lastAimTime = 0
 RunService.RenderStepped:Connect(function()
     if AntiCheatDetected then return end
-    
+
     local vpSize = Camera.ViewportSize
     local center = Vector2.new(vpSize.X * 0.5, vpSize.Y * 0.5)
     local activeColor = GetCurrentColor()
-    
+
     if PlatformGui then
         local stroke = PlatformGui:FindFirstChildWhichIsA("UIStroke")
         if stroke then
@@ -664,11 +664,11 @@ RunService.RenderStepped:Connect(function()
         Crosshair_V.From = Vector2.new(center.X, center.Y - Crosshair_Size - gap)
         Crosshair_V.To = Vector2.new(center.X, center.Y + Crosshair_Size + gap)
         Crosshair_Dot.Position = center
-        
+
         Crosshair_H.Color = activeColor
         Crosshair_V.Color = activeColor
         Crosshair_Dot.Color = activeColor
-        
+
         Crosshair_H.Visible = true
         Crosshair_V.Visible = true
         Crosshair_Dot.Visible = true
@@ -742,12 +742,12 @@ task.delay(1.5, function()
 
     -- MAIN TAB
     MainTab:CreateSection("Статус")
-    
+
     StatusLabel = MainTab:CreateLabel({
         Name = "🟢 Защита активна | ESP: Выкл | Аимбот: Выкл",
         CurrentValue = "active"
     })
-    
+
     MainTab:CreateSection("Combat Tools")
     MainTab:CreateToggle({
         Name = "Universal ESP",
@@ -837,7 +837,7 @@ task.delay(1.5, function()
         CurrentValue = false,
         Callback = function(V) ConfirmEnabled = V end
     })
-    
+
     PlayerTab:CreateSection("Platform System")
     PlayerTab:CreateToggle({
        Name = "Floating Platform Button",
@@ -904,7 +904,7 @@ task.delay(1.5, function()
         end 
     })
     PlayerTab:CreateSlider({ Name = "Jump Height", Range = {50, 350}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPower_Value = V end })
-    
+
     UpdateStatus()
 end)
 
