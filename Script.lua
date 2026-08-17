@@ -14,13 +14,14 @@ local Crosshair_Enabled = false
 -- Настройки вкладки PLAYER
 local Fly_Enabled = false
 local Speed_Enabled = false
+local GodMode_Enabled = false
 local WalkSpeed_Value = 16
 local Jump_Enabled = false
 local JumpPower_Value = 50
 local Noclip_Enabled = false
 
 -- Настройки тумблеров VISUAL (Плавность добавлена)
-local Aimbot_Smoothness = 0.4 -- Теперь локальная переменная
+local Aimbot_Smoothness = 0.4
 local Aimbot_FOV = 150 
 local Crosshair_Size = 10 
 local Vis_Boxes = true
@@ -82,7 +83,6 @@ for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(RemoveESP)
 
--- Улучшенный выбор цели (ищет абсолютно среди всех игроков на сервере)
 local function GetClosestPlayerToCenter()
     local closestPlayer = nil
     local shortestDistance = Aimbot_FOV
@@ -124,7 +124,17 @@ RunService.Heartbeat:Connect(function()
 
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        hum.WalkSpeed = Speed_Enabled and WalkSpeed_Value or 16
+        
+        -- Скорость меняется только если включен Speed_Enabled
+        if Speed_Enabled then
+            hum.WalkSpeed = WalkSpeed_Value
+        end
+        
+        -- Логика God Mode
+        if GodMode_Enabled then
+            hum.Health = hum.MaxHealth
+        end
+
         if Jump_Enabled then
             hum.JumpPower = JumpPower_Value
             hum.UseJumpPower = true
@@ -201,12 +211,10 @@ RunService.Heartbeat:Connect(function()
         else objs.Box.Visible = false objs.Line.Visible = false objs.Text.Visible = false end
     end
 
-    -- Улучшенный Аимбот с динамической плавностью
     if Aimbot_Enabled then
         local target = GetClosestPlayerToCenter()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             local targetHead = target.Character.Head
-            -- Плавное интерполирование (Lerp) камеры к цели
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, targetHead.Position), Aimbot_Smoothness)
         end
     end
@@ -384,10 +392,9 @@ RunService.Heartbeat:Connect(function()
     if ColorModes[CurrentColorIndex] == "RAINBOW" and _G.CurrentRainbowColor then ColorButton.TextColor3 = _G.CurrentRainbowColor end
 end)
 
--- НОВАЯ КНОПКА "НАЙТИ ПУСТОЙ СЕРВЕР" (ЗАМЕНЯЕТ СОЗДАНИЕ ПРИВАТНОГО)
 local FindEmptyServerButton = Instance.new("TextButton")
 FindEmptyServerButton.Size = UDim2.new(0, 190, 0, 35)
-FindEmptyServerButton.Position = UDim2.new(0.5, -95, 0, 155) -- Под кнопкой COLOR
+FindEmptyServerButton.Position = UDim2.new(0.5, -95, 0, 155)
 FindEmptyServerButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
 FindEmptyServerButton.Text = "🌐 НАЙТИ ПУСТОЙ СЕРВЕР"
 FindEmptyServerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -403,14 +410,12 @@ FindEmptyServerButton.MouseButton1Click:Connect(function()
     local PlaceId = game.PlaceId
     local LocalPlayer = Players.LocalPlayer
 
-    -- Уведомление о начале поиска
     game.StarterGui:SetCore("SendNotification", {
         Title = "🔍 Поиск сервера",
         Text = "Сканируем список серверов...",
         Duration = 5
     })
 
-    -- Поиск пустого сервера через API Roblox
     pcall(function()
         local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
         local response = game:HttpGet(url)
@@ -419,7 +424,6 @@ FindEmptyServerButton.MouseButton1Click:Connect(function()
         local foundServer = nil
         local minPlayers = math.huge
         
-        -- Ищем сервер с минимальным количеством игроков
         for _, server in pairs(serverList.data) do
             if server.playing < server.maxPlayers and server.playing < minPlayers and server.id ~= game.JobId then
                 minPlayers = server.playing
@@ -444,13 +448,7 @@ FindEmptyServerButton.MouseButton1Click:Connect(function()
         end
     end)
 end)
-
--- ============================================
--- КОНЕЦ ЧАСТИ 1
--- ============================================
--- ============================================
 -- ЧАСТЬ 2: НАСТРОЙКИ ВКЛАДОК VISUAL, PLAYER И ПОЛЗУНКИ
--- ============================================
 local UserInputService = game:GetService("UserInputService")
 local MainFrame = _G.RomanMainFrame
 
@@ -549,7 +547,7 @@ CrosshairSliderButton.Text = ""
 CrosshairSliderButton.Parent = CrosshairSliderFrame
 Instance.new("UICorner", CrosshairSliderButton).CornerRadius = UDim.new(1,0)
 
--- НОВЫЙ ПОЛЗУНОК: Плавность Аима (Smoothness)
+-- Плавность Аима
 local SmoothSliderLabel = Instance.new("TextLabel")
 SmoothSliderLabel.Size = UDim2.new(0, 190, 0, 15)
 SmoothSliderLabel.Position = UDim2.new(0.5, -95, 0, 255)
@@ -582,7 +580,7 @@ Instance.new("UICorner", SmoothSliderButton).CornerRadius = UDim.new(1,0)
 local PlayerScroll = Instance.new("ScrollingFrame")
 PlayerScroll.Size = UDim2.new(1, 0, 1, 0)
 PlayerScroll.BackgroundTransparency = 1
-PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, 290)
+PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, 330)
 PlayerScroll.ScrollBarThickness = 3
 PlayerScroll.Parent = _G.PlayerContentFrame
 
@@ -620,9 +618,27 @@ NoclipBtn.MouseButton1Click:Connect(function()
     NoclipBtn.BackgroundColor3 = Noclip_Enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
 end)
 
+-- Новая кнопка GOD MODE
+local GodModeBtn = Instance.new("TextButton")
+GodModeBtn.Size = UDim2.new(0, 190, 0, 30)
+GodModeBtn.Position = UDim2.new(0.5, -95, 0, 75)
+GodModeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+GodModeBtn.Text = "GOD MODE: OFF"
+GodModeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GodModeBtn.Font = Enum.Font.GothamBold
+GodModeBtn.TextSize = 11
+GodModeBtn.Parent = PlayerScroll
+Instance.new("UICorner", GodModeBtn).CornerRadius = UDim.new(0,6)
+
+GodModeBtn.MouseButton1Click:Connect(function()
+    GodMode_Enabled = not GodMode_Enabled
+    GodModeBtn.Text = GodMode_Enabled and "GOD MODE: ON" or "GOD MODE: OFF"
+    GodModeBtn.BackgroundColor3 = GodMode_Enabled and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+end)
+
 local SpeedToggleBtn = Instance.new("TextButton")
 SpeedToggleBtn.Size = UDim2.new(0, 190, 0, 25)
-SpeedToggleBtn.Position = UDim2.new(0.5, -95, 0, 80)
+SpeedToggleBtn.Position = UDim2.new(0.5, -95, 0, 115)
 SpeedToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 SpeedToggleBtn.Text = "SPEED HACK: OFF"
 SpeedToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -633,17 +649,17 @@ Instance.new("UICorner", SpeedToggleBtn).CornerRadius = UDim.new(0,5)
 
 local SpeedLabel = Instance.new("TextLabel")
 SpeedLabel.Size = UDim2.new(0, 190, 0, 15)
-SpeedLabel.Position = UDim2.new(0.5, -95, 0, 110)
+SpeedLabel.Position = UDim2.new(0.5, -95, 0, 145)
 SpeedLabel.BackgroundTransparency = 1
 SpeedLabel.Text = "Значение Скорости: " .. tostring(WalkSpeed_Value)
 SpeedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-SpeedLabel.Font = Enum.Font.GothamBold -- ИСПРАВЛЕНО
-SpeedLabel.TextSize = 10              -- ИСПРАВЛЕНО
+SpeedLabel.Font = Enum.Font.GothamBold
+SpeedLabel.TextSize = 10
 SpeedLabel.Parent = PlayerScroll
 
 local SpeedFrame = Instance.new("Frame")
 SpeedFrame.Size = UDim2.new(0, 190, 0, 6)
-SpeedFrame.Position = UDim2.new(0.5, -95, 0, 130)
+SpeedFrame.Position = UDim2.new(0.5, -95, 0, 165)
 SpeedFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
 SpeedFrame.Parent = PlayerScroll
 
@@ -668,7 +684,7 @@ end)
 
 local JumpToggleBtn = Instance.new("TextButton")
 JumpToggleBtn.Size = UDim2.new(0, 190, 0, 25)
-JumpToggleBtn.Position = UDim2.new(0.5, -95, 0, 150)
+JumpToggleBtn.Position = UDim2.new(0.5, -95, 0, 185)
 JumpToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 JumpToggleBtn.Text = "JUMP POWER: OFF"
 JumpToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -679,7 +695,7 @@ Instance.new("UICorner", JumpToggleBtn).CornerRadius = UDim.new(0,5)
 
 local JumpLabel = Instance.new("TextLabel")
 JumpLabel.Size = UDim2.new(0, 190, 0, 15)
-JumpLabel.Position = UDim2.new(0.5, -95, 0, 180)
+JumpLabel.Position = UDim2.new(0.5, -95, 0, 215)
 JumpLabel.BackgroundTransparency = 1
 JumpLabel.Text = "Высота Прыжка: " .. tostring(JumpPower_Value)
 JumpLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -689,7 +705,7 @@ JumpLabel.Parent = PlayerScroll
 
 local JumpFrame = Instance.new("Frame")
 JumpFrame.Size = UDim2.new(0, 190, 0, 6)
-JumpFrame.Position = UDim2.new(0.5, -95, 0, 200)
+JumpFrame.Position = UDim2.new(0.5, -95, 0, 235)
 JumpFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
 JumpFrame.Parent = PlayerScroll
 
@@ -792,7 +808,3 @@ OpenButton.InputEnded:Connect(function(input)
         end
     end
 end)
-
--- ============================================
--- КОНЕЦ СКРИПТА
--- ============================================
