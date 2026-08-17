@@ -49,44 +49,6 @@ local function CheckAntiCheat()
     return false
 end
 
-local function StartAntiCheatLoop()
-    task.spawn(function()
-        while task.wait(5) do
-            if AntiCheatDetected then
-                AntiCheatTimer = AntiCheatTimer - 5
-                if AntiCheatTimer <= 0 then
-                    AntiCheatDetected = false
-                    Window:Notify({
-                        Title = "✅ Защита восстановлена",
-                        Content = "Можно продолжать",
-                        Duration = 2
-                    })
-                    UpdateStatus()
-                end
-            else
-                if CheckAntiCheat() then
-                    AntiCheatDetected = true
-                    AntiCheatTimer = 15
-                    ESP_Enabled = false
-                    Aimbot_Enabled = false
-                    Speed_Enabled = false
-                    Noclip_Enabled = false
-                    GodMode_Enabled = false
-                    InfJump_Enabled = false
-                    if PlatformGui then PlatformGui.Enabled = false end
-                    LogEvent("AntiCheat detected! Features disabled.")
-                    UpdateStatus()
-                    Window:Notify({
-                        Title = "⚠️ Обнаружен античит!",
-                        Content = "Функции отключены на 15 секунд",
-                        Duration = 3
-                    })
-                end
-            end
-        end
-    end)
-end
-
 -- ============================================
 -- Remote Events Finder & Hooking
 -- ============================================
@@ -908,7 +870,43 @@ task.delay(1.5, function()
     PlayerTab:CreateSlider({ Name = "Jump Height", Range = {50, 350}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPower_Value = V end })
 
     UpdateStatus()
-    StartAntiCheatLoop()
+
+    -- ЗАПУСК АНТИЧИТА ПОСЛЕ СОЗДАНИЯ ВСЕГО UI
+    task.spawn(function()
+        while task.wait(5) do
+            if AntiCheatDetected then
+                AntiCheatTimer = AntiCheatTimer - 5
+                if AntiCheatTimer <= 0 then
+                    AntiCheatDetected = false
+                    Window:Notify({
+                        Title = "✅ Защита восстановлена",
+                        Content = "Можно продолжать",
+                        Duration = 2
+                    })
+                    UpdateStatus()
+                end
+            else
+                if CheckAntiCheat() then
+                    AntiCheatDetected = true
+                    AntiCheatTimer = 15
+                    ESP_Enabled = false
+                    Aimbot_Enabled = false
+                    Speed_Enabled = false
+                    Noclip_Enabled = false
+                    GodMode_Enabled = false
+                    InfJump_Enabled = false
+                    if PlatformGui then PlatformGui.Enabled = false end
+                    LogEvent("AntiCheat detected! Features disabled.")
+                    UpdateStatus()
+                    Window:Notify({
+                        Title = "⚠️ Обнаружен античит!",
+                        Content = "Функции отключены на 15 секунд",
+                        Duration = 3
+                    })
+                end
+            end
+        end
+    end)
 end)
 
 print("Script loaded successfully!")
