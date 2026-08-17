@@ -79,10 +79,12 @@ local Speed_Enabled = false
 local WalkSpeed_Value = 16
 local Jump_Enabled = false
 local JumpPower_Value = 50
+local InfJump_Enabled = false
 local Noclip_Enabled = false
 local GodMode_Enabled = false
 
 local PlatformMode = "Under Player"
+local PlatformSize_Value = 7
 local WaitingForTarget = false
 local PlatformsQueue = {}
 local MaxPlatforms = 10
@@ -150,18 +152,16 @@ for _, p in ipairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(RemoveESP)
 
--- Ultra-Universal Part Finder (Works with any custom characters & models)
+-- Ultra-Universal Part Finder
 local function GetTargetPart(character)
     if not character then return nil end
     
-    -- 1. Стандартные приоритетные части
     local standard = character:FindFirstChild("HumanoidRootPart") 
         or character:FindFirstChild("Head") 
         or character:FindFirstChild("Torso") 
         or character:FindFirstChild("UpperTorso")
     if standard and standard:IsA("BasePart") then return standard end
     
-    -- 2. Если стандартных нет, ищем первую попавшуюся деталь или кость в модели
     for _, v in ipairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
             return v
@@ -193,7 +193,7 @@ end
 -- Platform Manager
 local function SpawnPlatformAt(pos)
     local platform = Instance.new("Part")
-    platform.Size = Vector3.new(7, 1, 7)
+    platform.Size = Vector3.new(PlatformSize_Value, 1, PlatformSize_Value)
     platform.Position = pos
     platform.Anchored = true
     platform.CanCollide = true
@@ -218,6 +218,19 @@ local function TriggerPlatform()
         WaitingForTarget = true
     end
 end
+
+-- Infinite Jump Listener
+UserInputService.JumpRequest:Connect(function()
+    if InfJump_Enabled then
+        local char = LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end
+end)
 
 -- Input Handling for Platforms
 UserInputService.InputBegan:Connect(function(input, gpe)
@@ -462,10 +475,18 @@ PlayerTab:CreateDropdown({
        if type(Option) == "table" then PlatformMode = Option[1] else PlatformMode = Option end
    end,
 })
+PlayerTab:CreateSlider({
+   Name = "Platform Size",
+   Range = {3, 30},
+   Increment = 1,
+   CurrentValue = 7,
+   Callback = function(V) PlatformSize_Value = V end,
+})
 
 PlayerTab:CreateSection("Movement & Defense")
 PlayerTab:CreateToggle({ Name = "God Mode", CurrentValue = false, Callback = function(V) GodMode_Enabled = V end })
 PlayerTab:CreateToggle({ Name = "Noclip", CurrentValue = false, Callback = function(V) Noclip_Enabled = V end })
+PlayerTab:CreateToggle({ Name = "Infinite Jump", CurrentValue = false, Callback = function(V) InfJump_Enabled = V end })
 
 PlayerTab:CreateToggle({ 
     Name = "Speed Hack", 
