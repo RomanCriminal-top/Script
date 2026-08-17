@@ -150,14 +150,25 @@ for _, p in ipairs(Players:GetPlayers()) do CreateESP(p) end
 Players.PlayerAdded:Connect(CreateESP)
 Players.PlayerRemoving:Connect(RemoveESP)
 
--- Universal Part Finder
+-- Ultra-Universal Part Finder (Works with any custom characters & models)
 local function GetTargetPart(character)
     if not character then return nil end
-    return character:FindFirstChild("Head") 
-        or character:FindFirstChild("HumanoidRootPart") 
+    
+    -- 1. Стандартные приоритетные части
+    local standard = character:FindFirstChild("HumanoidRootPart") 
+        or character:FindFirstChild("Head") 
         or character:FindFirstChild("Torso") 
-        or character:FindFirstChild("UpperTorso") 
-        or character:FindFirstChildWhichIsA("BasePart")
+        or character:FindFirstChild("UpperTorso")
+    if standard and standard:IsA("BasePart") then return standard end
+    
+    -- 2. Если стандартных нет, ищем первую попавшуюся деталь или кость в модели
+    for _, v in ipairs(character:GetDescendants()) do
+        if v:IsA("BasePart") then
+            return v
+        end
+    end
+    
+    return nil
 end
 
 -- Fast Center Aimbot Search
