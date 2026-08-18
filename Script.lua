@@ -77,6 +77,7 @@ Vis_Lines = true
 Vis_FOV = true
 Vis_Names = true
 Vis_Dist = true
+Vis_State = false
 
 Aimbot_Smoothness = 0.4
 Aimbot_FOV = 150
@@ -130,6 +131,8 @@ Crosshair_Dot.Filled = true
 Crosshair_Dot.Visible = false
 
 ESP_Cache = {}
+PlayerLastPos = {}
+PlayerLastMoveTime = {}
 
 CreateESP = function(player)
     if player == LocalPlayer then return end
@@ -149,6 +152,8 @@ RemoveESP = function(player)
         ESP_Cache[player].Text:Remove()
         ESP_Cache[player] = nil
     end
+    PlayerLastPos[player] = nil
+    PlayerLastMoveTime[player] = nil
 end
 
 for _, p in ipairs(Players:GetPlayers()) do CreateESP(p) end
@@ -309,11 +314,24 @@ RunService.RenderStepped:Connect(function()
         Crosshair_V.Visible = true
         Crosshair_Dot.Visible = true
     else Crosshair_H.Visible = false; Crosshair_V.Visible = false; Crosshair_Dot.Visible = false end
-    for player, objs in pairs(ESP_Cache) do
+            for player, objs in pairs(ESP_Cache) do
         if ESP_Enabled and player.Character then
             local rootPart = GetTargetPart(player.Character)
             local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            
             if rootPart and (not hum or hum.Health > 0) then
+                local currentPos = rootPart.Position
+                local isAFK = false
+                
+                if not PlayerLastPos[player] or (PlayerLastPos[player] - currentPos).Magnitude > 0.5 then
+                    PlayerLastPos[player] = currentPos
+                    PlayerLastMoveTime[player] = tick()
+                end
+                
+                if (tick() - (PlayerLastMoveTime[player] or tick())) >= 5 then
+                    isAFK = true
+                end
+
                 local pos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
                 if onScreen then
                     local distance = math.floor((Camera.CFrame.Position - rootPart.Position).Magnitude)
@@ -332,14 +350,31 @@ RunService.RenderStepped:Connect(function()
                         objs.Line.To = Vector2.new(pos.X, pos.Y + (sizeY * 0.5))
                         objs.Line.Visible = true
                     else objs.Line.Visible = false end
-                    if Vis_Names or Vis_Dist then
-                        local str = ""
-                        if Vis_Names then str = str .. player.Name end
-                        if Vis_Dist then str = str .. " [" .. tostring(distance) .. "m]" end
-                        objs.Text.Text = str
-                        objs.Text.Position = Vector2.new(pos.X, pos.Y - (sizeY * 0.5) - 16)
-                        objs.Text.Visible = true
-                    else objs.Text.Visible = false end
+                    
+                    if Vis_Names or Vis_Dist or Vis_State then
+                        local textParts = {}
+                        if Vis_State and isAFK then 
+                            table.insert(textParts, "[AFK]") 
+                        end
+                        if Vis_Names then 
+                            table.insert(textParts, player.Name) 
+                        end
+                        if Vis_Dist then 
+                            table.insert(textParts, "[" .. tostring(distance) .. "m]") 
+                        end
+                        
+                        local finalStr = table.concat(textParts, " ")
+                        
+                        if finalStr ~= "" then
+                            objs.Text.Text = finalStr
+                            objs.Text.Position = Vector2.new(pos.X, pos.Y - (sizeY * 0.5) - 16)
+                            objs.Text.Visible = true
+                        else
+                            objs.Text.Visible = false
+                        end
+                    else 
+                        objs.Text.Visible = false 
+                    end
                 else objs.Box.Visible = false; objs.Line.Visible = false; objs.Text.Visible = false end
             else objs.Box.Visible = false; objs.Line.Visible = false; objs.Text.Visible = false end
         else objs.Box.Visible = false; objs.Line.Visible = false; objs.Text.Visible = false end
@@ -349,6 +384,7 @@ RunService.RenderStepped:Connect(function()
         if targetPart then Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, targetPart.Position), Aimbot_Smoothness) end
     end
 end)
+
 MainTab = Window:CreateTab("Main", 4483362458)
 VisualTab = Window:CreateTab("Visuals", 4483362458)
 PlayerTab = Window:CreateTab("Player", 4483362458)
@@ -424,6 +460,7 @@ VisualTab:CreateToggle({ Name = "Boxes", CurrentValue = true, Callback = functio
 VisualTab:CreateToggle({ Name = "Lines", CurrentValue = true, Callback = function(V) Vis_Lines = V; NotifyToggle("ESP Lines", V) end })
 VisualTab:CreateToggle({ Name = "Names", CurrentValue = true, Callback = function(V) Vis_Names = V; NotifyToggle("ESP Names", V) end })
 VisualTab:CreateToggle({ Name = "Distance", CurrentValue = true, Callback = function(V) Vis_Dist = V; NotifyToggle("ESP Distance", V) end })
+VisualTab:CreateToggle({ Name = "State", CurrentValue = false, Callback = function(V) Vis_State = V; NotifyToggle("ESP State", V) end })
 
 VisualTab:CreateSection("Aimbot & Overlay")
 VisualTab:CreateToggle({ Name = "FOV Circle", CurrentValue = true, Callback = function(V) Vis_FOV = V; NotifyToggle("FOV Circle", V) end })
