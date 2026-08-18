@@ -314,7 +314,8 @@ RunService.RenderStepped:Connect(function()
         Crosshair_V.Visible = true
         Crosshair_Dot.Visible = true
     else Crosshair_H.Visible = false; Crosshair_V.Visible = false; Crosshair_Dot.Visible = false end
-            for player, objs in pairs(ESP_Cache) do
+        
+    for player, objs in pairs(ESP_Cache) do
         if ESP_Enabled and player.Character then
             local rootPart = GetTargetPart(player.Character)
             local hum = player.Character:FindFirstChildOfClass("Humanoid")
