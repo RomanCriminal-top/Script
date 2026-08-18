@@ -449,7 +449,7 @@ PlayerTab:CreateDropdown({
        if type(Option) == "table" then PlatformMode = Option[1] else PlatformMode = Option end
    end,
 })
-PlayerTab:CreateSlider({ Name = "Platform Size", Range = {1, 30}, Increment = 1, CurrentValue = 7, Callback = function(V) PlatformSize_Value = V end })
+PlayerTab:CreateSlider({ Name = "Platform Size", Range = {1, 50}, Increment = 1, CurrentValue = 7, Callback = function(V) PlatformSize_Value = V end })
 PlayerTab:CreateSlider({
    Name = "Max Platforms",
    Range = {1, 50},
@@ -481,7 +481,7 @@ PlayerTab:CreateToggle({
         NotifyToggle("Speed Hack", V)
     end 
 })
-PlayerTab:CreateSlider({ Name = "Walk Speed", Range = {1, 250}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeed_Value = V end })
+PlayerTab:CreateSlider({ Name = "Walk Speed", Range = {1, 500}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeed_Value = V end })
 
 PlayerTab:CreateToggle({ 
     Name = "Jump Power", 
@@ -498,4 +498,4 @@ PlayerTab:CreateToggle({
         NotifyToggle("Jump Power", V)
     end 
 })
-PlayerTab:CreateSlider({ Name = "Jump Height", Range = {1, 350}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPower_Value = V end })
+PlayerTab:CreateSlider({ Name = "Jump Height", Range = {1, 500}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPower_Value = V end })
