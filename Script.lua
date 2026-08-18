@@ -68,34 +68,36 @@ end
 if LocalPlayer.Character then SaveOriginalStats(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(SaveOriginalStats)
 
+-- All features disabled by default
 ESP_Enabled = false
 Aimbot_Enabled = false
 Crosshair_Enabled = false
 
-Vis_Boxes = true
-Vis_Lines = true
-Vis_FOV = true
-Vis_Names = true
-Vis_Dist = true
+Vis_Boxes = false
+Vis_Lines = false
+Vis_FOV = false
+Vis_Names = false
+Vis_Dist = false
 Vis_State = false
 
-Aimbot_Smoothness = 0.4
-Aimbot_FOV = 150
-Crosshair_Size = 10
+-- Sliders minimal defaults
+Aimbot_Smoothness = 0.01
+Aimbot_FOV = 1
+Crosshair_Size = 1
 
 Speed_Enabled = false
-WalkSpeed_Value = 16
+WalkSpeed_Value = 1
 Jump_Enabled = false
-JumpPower_Value = 50
+JumpPower_Value = 1
 InfJump_Enabled = false
 Noclip_Enabled = false
 GodMode_Enabled = false
 
 PlatformMode = "Under Player"
-PlatformSize_Value = 7
+PlatformSize_Value = 1
 WaitingForTarget = false
 PlatformsQueue = {}
-MaxPlatforms = 10
+MaxPlatforms = 1
 
 SelectedColorName = "Gray"
 ColorTable = {
@@ -276,7 +278,6 @@ RunService.Stepped:Connect(function()
         end
     end
 end)
-
 RunService.RenderStepped:Connect(function()
     local vpSize = Camera.ViewportSize
     local center = Vector2.new(vpSize.X * 0.5, vpSize.Y * 0.5)
@@ -354,8 +355,12 @@ RunService.RenderStepped:Connect(function()
                     
                     if Vis_Names or Vis_Dist or Vis_State then
                         local textParts = {}
-                        if Vis_State and isAFK then 
-                            table.insert(textParts, "[AFK]") 
+                        if Vis_State then 
+                            if isAFK then
+                                table.insert(textParts, "[AFK]")
+                            else
+                                table.insert(textParts, "[Active]")
+                            end
                         end
                         if Vis_Names then 
                             table.insert(textParts, player.Name) 
@@ -457,17 +462,17 @@ VisualTab:CreateDropdown({
 })
 
 VisualTab:CreateSection("ESP Settings")
-VisualTab:CreateToggle({ Name = "Boxes", CurrentValue = true, Callback = function(V) Vis_Boxes = V; NotifyToggle("ESP Boxes", V) end })
-VisualTab:CreateToggle({ Name = "Lines", CurrentValue = true, Callback = function(V) Vis_Lines = V; NotifyToggle("ESP Lines", V) end })
-VisualTab:CreateToggle({ Name = "Names", CurrentValue = true, Callback = function(V) Vis_Names = V; NotifyToggle("ESP Names", V) end })
-VisualTab:CreateToggle({ Name = "Distance", CurrentValue = true, Callback = function(V) Vis_Dist = V; NotifyToggle("ESP Distance", V) end })
+VisualTab:CreateToggle({ Name = "Boxes", CurrentValue = false, Callback = function(V) Vis_Boxes = V; NotifyToggle("ESP Boxes", V) end })
+VisualTab:CreateToggle({ Name = "Lines", CurrentValue = false, Callback = function(V) Vis_Lines = V; NotifyToggle("ESP Lines", V) end })
+VisualTab:CreateToggle({ Name = "Names", CurrentValue = false, Callback = function(V) Vis_Names = V; NotifyToggle("ESP Names", V) end })
+VisualTab:CreateToggle({ Name = "Distance", CurrentValue = false, Callback = function(V) Vis_Dist = V; NotifyToggle("ESP Distance", V) end })
 VisualTab:CreateToggle({ Name = "State", CurrentValue = false, Callback = function(V) Vis_State = V; NotifyToggle("ESP State", V) end })
 
 VisualTab:CreateSection("Aimbot & Overlay")
-VisualTab:CreateToggle({ Name = "FOV Circle", CurrentValue = true, Callback = function(V) Vis_FOV = V; NotifyToggle("FOV Circle", V) end })
-VisualTab:CreateSlider({ Name = "FOV Radius", Range = {1, 500}, Increment = 1, CurrentValue = 150, Callback = function(V) Aimbot_FOV = V end })
-VisualTab:CreateSlider({ Name = "Crosshair Size", Range = {1, 50}, Increment = 1, CurrentValue = 10, Callback = function(V) Crosshair_Size = V end })
-VisualTab:CreateSlider({ Name = "Aim Smoothness", Range = {0.1, 1}, Increment = 0.05, CurrentValue = 0.4, Callback = function(V) Aimbot_Smoothness = V end })
+VisualTab:CreateToggle({ Name = "FOV Circle", CurrentValue = false, Callback = function(V) Vis_FOV = V; NotifyToggle("FOV Circle", V) end })
+VisualTab:CreateSlider({ Name = "FOV Radius", Range = {1, 500}, Increment = 1, CurrentValue = 1, Callback = function(V) Aimbot_FOV = V end })
+VisualTab:CreateSlider({ Name = "Crosshair Size", Range = {1, 50}, Increment = 1, CurrentValue = 1, Callback = function(V) Crosshair_Size = V end })
+VisualTab:CreateSlider({ Name = "Aim Smoothness", Range = {0.01, 1}, Increment = 0.01, CurrentValue = 0.01, Callback = function(V) Aimbot_Smoothness = V end })
 
 PlayerTab:CreateSection("Platform System")
 PlayerTab:CreateToggle({
@@ -487,12 +492,12 @@ PlayerTab:CreateDropdown({
        if type(Option) == "table" then PlatformMode = Option[1] else PlatformMode = Option end
    end,
 })
-PlayerTab:CreateSlider({ Name = "Platform Size", Range = {1, 50}, Increment = 1, CurrentValue = 7, Callback = function(V) PlatformSize_Value = V end })
+PlayerTab:CreateSlider({ Name = "Platform Size", Range = {1, 50}, Increment = 1, CurrentValue = 1, Callback = function(V) PlatformSize_Value = V end })
 PlayerTab:CreateSlider({
    Name = "Max Platforms",
    Range = {1, 50},
    Increment = 1,
-   CurrentValue = 10,
+   CurrentValue = 1,
    Callback = function(V)
        MaxPlatforms = V
        while #PlatformsQueue > MaxPlatforms do
@@ -519,7 +524,7 @@ PlayerTab:CreateToggle({
         NotifyToggle("Speed Hack", V)
     end 
 })
-PlayerTab:CreateSlider({ Name = "Walk Speed", Range = {1, 500}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeed_Value = V end })
+PlayerTab:CreateSlider({ Name = "Walk Speed", Range = {1, 500}, Increment = 1, CurrentValue = 1, Callback = function(V) WalkSpeed_Value = V end })
 
 PlayerTab:CreateToggle({ 
     Name = "Jump Power", 
@@ -536,4 +541,4 @@ PlayerTab:CreateToggle({
         NotifyToggle("Jump Power", V)
     end 
 })
-PlayerTab:CreateSlider({ Name = "Jump Height", Range = {1, 500}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPower_Value = V end })
+PlayerTab:CreateSlider({ Name = "Jump Height", Range = {1, 500}, Increment = 1, CurrentValue = 1, Callback = function(V) JumpPower_Value = V end })
