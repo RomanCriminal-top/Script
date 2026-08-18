@@ -15,8 +15,8 @@ Mouse = LocalPlayer:GetMouse()
 -- Notification Helper Function
 NotifyToggle = function(featureName, state)
     Rayfield:Notify({
-        Title = "Система",
-        Content = featureName .. (state and " включен" or " выключен"),
+        Title = "System",
+        Content = featureName .. (state and " enabled" or " disabled"),
         Duration = 2,
         Image = 4483362458,
     })
@@ -24,10 +24,10 @@ end
 
 -- Window Creation
 Window = Rayfield:CreateWindow({
-   Name = "Скрипт @RomanCriminal",
+   Name = "@RomanCriminal script",
    Icon = 0,
-   LoadingTitle = "Скрипт @RomanCriminal",
-   LoadingSubtitle = "Скрипт @RomanCriminal",
+   LoadingTitle = "Loading @RomanCriminal script...",
+   LoadingSubtitle = "by @RomanCriminal",
    Theme = "Ocean",
    DisableRayfieldPrompts = false,
    DisableBuildWarnings = false,
@@ -90,19 +90,19 @@ InfJump_Enabled = false
 Noclip_Enabled = false
 GodMode_Enabled = false
 
-PlatformMode = "Под игроком"
+PlatformMode = "Under Player"
 PlatformSize_Value = 7
 WaitingForTarget = false
 PlatformsQueue = {}
 MaxPlatforms = 10
 
-SelectedColorName = "Серый"
+SelectedColorName = "Gray"
 ColorTable = {
-    ["Серый"] = Color3.fromRGB(150, 150, 150)
+    ["Gray"] = Color3.fromRGB(150, 150, 150)
 }
 
 GetCurrentColor = function()
-    if SelectedColorName == "Радуга" then
+    if SelectedColorName == "Rainbow" then
         return Color3.fromHSV((tick() % 3) / 3, 1, 1)
     else
         return ColorTable[SelectedColorName] or Color3.fromRGB(150, 150, 150)
@@ -204,12 +204,12 @@ SpawnPlatformAt = function(pos)
 end
 
 TriggerPlatform = function()
-    if PlatformMode == "Под игроком" then
+    if PlatformMode == "Under Player" then
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("HumanoidRootPart") then
             SpawnPlatformAt(char.HumanoidRootPart.Position - Vector3.new(0, 3.5, 0))
         end
-    elseif PlatformMode == "По клику" then
+    elseif PlatformMode == "Target Click" then
         WaitingForTarget = true
     end
 end
@@ -349,99 +349,109 @@ RunService.RenderStepped:Connect(function()
         if targetPart then Camera.CFrame = Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position, targetPart.Position), Aimbot_Smoothness) end
     end
 end)
-MainTab = Window:CreateTab("Главная", 4483362458)
-VisualTab = Window:CreateTab("Визуализация", 4483362458)
-PlayerTab = Window:CreateTab("Игрок", 4483362458)
+MainTab = Window:CreateTab("Main", 4483362458)
+VisualTab = Window:CreateTab("Visuals", 4483362458)
+PlayerTab = Window:CreateTab("Player", 4483362458)
 
-MainTab:CreateSection("Инструменты боя")
+MainTab:CreateSection("Combat Tools")
 MainTab:CreateToggle({
-    Name = "Универсальный ESP",
+    Name = "Universal ESP",
     CurrentValue = false,
     Callback = function(V)
         ESP_Enabled = V
-        NotifyToggle("Универсальный ESP", V)
+        NotifyToggle("Universal ESP", V)
     end
 })
 MainTab:CreateToggle({
-    Name = "Универсальный Аимбот",
+    Name = "Universal Aimbot",
     CurrentValue = false,
     Callback = function(V)
         Aimbot_Enabled = V
-        NotifyToggle("Универсальный Аимбот", V)
+        NotifyToggle("Universal Aimbot", V)
     end
 })
 MainTab:CreateToggle({
-    Name = "Прицел",
+    Name = "Crosshair",
     CurrentValue = false,
     Callback = function(V)
         Crosshair_Enabled = V
-        NotifyToggle("Прицел", V)
+        NotifyToggle("Crosshair", V)
     end
 })
 
-MainTab:CreateSection("Операции с сервером")
+MainTab:CreateSection("Server Operations")
 MainTab:CreateButton({
-   Name = "Смена сервера (мало игроков)",
+   Name = "Hop to Bad Server",
    Callback = function()
-      local HttpService = game:GetService("HttpService")
-      local TeleportService = game:GetService("TeleportService")
-      pcall(function()
-          local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
-          local serverList = HttpService:JSONDecode(game:HttpGet(url))
-          for _, server in ipairs(serverList.data) do
-              if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                  TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, LocalPlayer)
+      Rayfield:Notify({Title = "Search", Content = "Searching for laggy server...", Duration = 3})
+      local Http = game:GetService("HttpService")
+      local TPS = game:GetService("TeleportService")
+      local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+      local success, result = pcall(function() return Http:JSONDecode(game:HttpGet(url)) end)
+      if success and result and result.data then
+          local servers = result.data
+          local targetServer = nil
+          for i = #servers, 1, -1 do
+              local s = servers[i]
+              if s.playing < 3 and s.id ~= game.JobId then
+                  targetServer = s
                   break
               end
           end
-      end)
+          if targetServer then
+              Rayfield:Notify({Title = "Found", Content = "Joining server: " .. targetServer.id, Duration = 3})
+              TPS:TeleportToPlaceInstance(game.PlaceId, targetServer.id, game.Players.LocalPlayer)
+          else
+              Rayfield:Notify({Title = "Oops", Content = "No bad servers found!", Duration = 3})
+          end
+      end
    end,
 })
 
-VisualTab:CreateSection("Тема и цвет")
+VisualTab:CreateSection("Theme & Color")
 VisualTab:CreateDropdown({
-   Name = "Акцентный цвет",
-   Options = {"Серый", "Радуга"},
-   CurrentOption = "Серый",
+   Name = "Accent Color",
+   Options = {"Gray", "Rainbow"},
+   CurrentOption = "Gray",
    MultipleOptions = false,
    Callback = function(Option)
        if type(Option) == "table" then SelectedColorName = Option[1] else SelectedColorName = Option end
    end,
 })
 
-VisualTab:CreateSection("Настройки ESP")
-VisualTab:CreateToggle({ Name = "Коробки", CurrentValue = true, Callback = function(V) Vis_Boxes = V; NotifyToggle("ESP Коробки", V) end })
-VisualTab:CreateToggle({ Name = "Линии", CurrentValue = true, Callback = function(V) Vis_Lines = V; NotifyToggle("ESP Линии", V) end })
-VisualTab:CreateToggle({ Name = "Имена", CurrentValue = true, Callback = function(V) Vis_Names = V; NotifyToggle("ESP Имена", V) end })
-VisualTab:CreateToggle({ Name = "Дистанция", CurrentValue = true, Callback = function(V) Vis_Dist = V; NotifyToggle("ESP Дистанция", V) end })
+VisualTab:CreateSection("ESP Settings")
+VisualTab:CreateToggle({ Name = "Boxes", CurrentValue = true, Callback = function(V) Vis_Boxes = V; NotifyToggle("ESP Boxes", V) end })
+VisualTab:CreateToggle({ Name = "Lines", CurrentValue = true, Callback = function(V) Vis_Lines = V; NotifyToggle("ESP Lines", V) end })
+VisualTab:CreateToggle({ Name = "Names", CurrentValue = true, Callback = function(V) Vis_Names = V; NotifyToggle("ESP Names", V) end })
+VisualTab:CreateToggle({ Name = "Distance", CurrentValue = true, Callback = function(V) Vis_Dist = V; NotifyToggle("ESP Distance", V) end })
 
-VisualTab:CreateSection("Аимбот и Оверлей")
-VisualTab:CreateToggle({ Name = "Круг FOV", CurrentValue = true, Callback = function(V) Vis_FOV = V; NotifyToggle("Круг FOV", V) end })
-VisualTab:CreateSlider({ Name = "Радиус FOV", Range = {1, 500}, Increment = 1, CurrentValue = 150, Callback = function(V) Aimbot_FOV = V end })
-VisualTab:CreateSlider({ Name = "Размер прицела", Range = {1, 50}, Increment = 1, CurrentValue = 10, Callback = function(V) Crosshair_Size = V end })
-VisualTab:CreateSlider({ Name = "Плавность аима", Range = {0.1, 1}, Increment = 0.05, CurrentValue = 0.4, Callback = function(V) Aimbot_Smoothness = V end })
+VisualTab:CreateSection("Aimbot & Overlay")
+VisualTab:CreateToggle({ Name = "FOV Circle", CurrentValue = true, Callback = function(V) Vis_FOV = V; NotifyToggle("FOV Circle", V) end })
+VisualTab:CreateSlider({ Name = "FOV Radius", Range = {1, 500}, Increment = 1, CurrentValue = 150, Callback = function(V) Aimbot_FOV = V end })
+VisualTab:CreateSlider({ Name = "Crosshair Size", Range = {1, 50}, Increment = 1, CurrentValue = 10, Callback = function(V) Crosshair_Size = V end })
+VisualTab:CreateSlider({ Name = "Aim Smoothness", Range = {0.1, 1}, Increment = 0.05, CurrentValue = 0.4, Callback = function(V) Aimbot_Smoothness = V end })
 
-PlayerTab:CreateSection("Система платформ")
+PlayerTab:CreateSection("Platform System")
 PlayerTab:CreateToggle({
-   Name = "Кнопка платформ",
+   Name = "Floating Button",
    CurrentValue = false,
    Callback = function(Value)
        PlatformGui.Enabled = Value
-       NotifyToggle("Кнопка платформ", Value)
+       NotifyToggle("Floating Button", Value)
    end,
 })
 PlayerTab:CreateDropdown({
-   Name = "Режим платформ",
-   Options = {"Под игроком", "По клику"},
-   CurrentOption = "Под игроком",
+   Name = "Platform Mode",
+   Options = {"Under Player", "Target Click"},
+   CurrentOption = "Under Player",
    MultipleOptions = false,
    Callback = function(Option)
        if type(Option) == "table" then PlatformMode = Option[1] else PlatformMode = Option end
    end,
 })
-PlayerTab:CreateSlider({ Name = "Размер платформ", Range = {1, 30}, Increment = 1, CurrentValue = 7, Callback = function(V) PlatformSize_Value = V end })
+PlayerTab:CreateSlider({ Name = "Platform Size", Range = {1, 30}, Increment = 1, CurrentValue = 7, Callback = function(V) PlatformSize_Value = V end })
 PlayerTab:CreateSlider({
-   Name = "Макс. платформ",
+   Name = "Max Platforms",
    Range = {1, 50},
    Increment = 1,
    CurrentValue = 10,
@@ -454,13 +464,13 @@ PlayerTab:CreateSlider({
    end,
 })
 
-PlayerTab:CreateSection("Движение и защита")
-PlayerTab:CreateToggle({ Name = "Бессмертие", CurrentValue = false, Callback = function(V) GodMode_Enabled = V; NotifyToggle("Бессмертие", V) end })
-PlayerTab:CreateToggle({ Name = "Ноклип", CurrentValue = false, Callback = function(V) Noclip_Enabled = V; NotifyToggle("Ноклип", V) end })
-PlayerTab:CreateToggle({ Name = "Бесконечный прыжок", CurrentValue = false, Callback = function(V) InfJump_Enabled = V; NotifyToggle("Бесконечный прыжок", V) end })
+PlayerTab:CreateSection("Movement & Defense")
+PlayerTab:CreateToggle({ Name = "God Mode", CurrentValue = false, Callback = function(V) GodMode_Enabled = V; NotifyToggle("God Mode", V) end })
+PlayerTab:CreateToggle({ Name = "Noclip", CurrentValue = false, Callback = function(V) Noclip_Enabled = V; NotifyToggle("Noclip", V) end })
+PlayerTab:CreateToggle({ Name = "Infinite Jump", CurrentValue = false, Callback = function(V) InfJump_Enabled = V; NotifyToggle("Infinite Jump", V) end })
 
 PlayerTab:CreateToggle({ 
-    Name = "Спидхак", 
+    Name = "Speed Hack", 
     CurrentValue = false, 
     Callback = function(V) 
         Speed_Enabled = V 
@@ -468,13 +478,13 @@ PlayerTab:CreateToggle({
             local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
             if hum then hum.WalkSpeed = Original_WalkSpeed end
         end
-        NotifyToggle("Спидхак", V)
+        NotifyToggle("Speed Hack", V)
     end 
 })
-PlayerTab:CreateSlider({ Name = "Скорость ходьбы", Range = {1, 250}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeed_Value = V end })
+PlayerTab:CreateSlider({ Name = "Walk Speed", Range = {1, 250}, Increment = 1, CurrentValue = 16, Callback = function(V) WalkSpeed_Value = V end })
 
 PlayerTab:CreateToggle({ 
-    Name = "Сила прыжка", 
+    Name = "Jump Power", 
     CurrentValue = false, 
     Callback = function(V) 
         Jump_Enabled = V 
@@ -485,7 +495,7 @@ PlayerTab:CreateToggle({
                 hum.UseJumpPower = false
             end
         end
-        NotifyToggle("Сила прыжка", V)
+        NotifyToggle("Jump Power", V)
     end 
 })
-PlayerTab:CreateSlider({ Name = "Высота прыжка", Range = {1, 350}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPower_Value = V end })
+PlayerTab:CreateSlider({ Name = "Jump Height", Range = {1, 350}, Increment = 1, CurrentValue = 50, Callback = function(V) JumpPower_Value = V end })
