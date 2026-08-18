@@ -381,7 +381,7 @@ MainTab:CreateToggle({
 
 MainTab:CreateSection("Server Operations")
 MainTab:CreateButton({
-   Name = "Hop to Bad Server",
+   Name = "Hop server",
    Callback = function()
       Rayfield:Notify({Title = "Search", Content = "Searching for laggy server...", Duration = 3})
       local Http = game:GetService("HttpService")
