@@ -278,6 +278,7 @@ RunService.Stepped:Connect(function()
         end
     end
 end)
+
 RunService.RenderStepped:Connect(function()
     local vpSize = Camera.ViewportSize
     local center = Vector2.new(vpSize.X * 0.5, vpSize.Y * 0.5)
