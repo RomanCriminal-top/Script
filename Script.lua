@@ -279,7 +279,45 @@ RunService.Stepped:Connect(function()
     end
 end)
 
-RunService.RenderStepped:Connect(function()
+-- Функция для поиска Stamina/Energy в Humanoid
+GetStaminaValue = function(hum)
+    if not hum then return nil, nil end
+    
+    -- Ищем по названиям: Stamina, Energy, или любое другое
+    local possibleNames = {"Stamina", "Energy", "StaminaValue", "EnergyValue", "StaminaBar"}
+    
+    for _, name in ipairs(possibleNames) do
+        local obj = hum:FindFirstChild(name)
+        if obj then
+            return obj, name
+        end
+    end
+    
+    -- Проверяем атрибуты
+    if hum:GetAttribute("Stamina") then
+        return hum, "Attribute_Stamina"
+    end
+    if hum:GetAttribute("Energy") then
+        return hum, "Attribute_Energy"
+    end
+    
+    return nil, nil
+end
+
+SetStaminaFull = function(hum)
+    if not hum then return end
+    
+    local staminaObj, name = GetStaminaValue(hum)
+    if staminaObj then
+        if name == "Attribute_Stamina" or name == "Attribute_Energy" then
+            local maxVal = hum:GetAttribute(name == "Attribute_Stamina" and "MaxStamina" or "MaxEnergy") or 100
+            hum:SetAttribute(name == "Attribute_Stamina" and "Stamina" or "Energy", maxVal)
+        elseif staminaObj:IsA("NumberValue") or staminaObj:IsA("IntValue") or staminaObj:IsA("DoubleValue") then
+            staminaObj.Value = staminaObj:FindFirstChild("MaxValue") and staminaObj.MaxValue.Value or 100
+        end
+    end
+end
+    RunService.RenderStepped:Connect(function()
     local vpSize = Camera.ViewportSize
     local center = Vector2.new(vpSize.X * 0.5, vpSize.Y * 0.5)
     local activeColor = GetCurrentColor()
@@ -293,17 +331,9 @@ RunService.RenderStepped:Connect(function()
         if hum then
             if Speed_Enabled then hum.WalkSpeed = WalkSpeed_Value end
             if GodMode_Enabled then 
-    hum.Health = hum.MaxHealth
-    if char:FindFirstChild("Stamina") then
-        char.Stamina.Value = char.Stamina.MaxValue
-    elseif hum:FindFirstChild("Stamina") then
-        hum.Stamina.Value = hum.Stamina.MaxValue
-    end
-    if char:FindFirstChild("Energy") then
-        char.Energy.Value = char.Energy.MaxValue
-    elseif hum:FindFirstChild("Energy") then
-        hum.Energy.Value = hum.Energy.MaxValue
-    end
+                hum.Health = hum.MaxHealth
+                -- Бесконечная Stamina/Energy
+                SetStaminaFull(hum)
             end
             if Jump_Enabled then hum.JumpPower = JumpPower_Value hum.UseJumpPower = true end
         end
@@ -521,7 +551,24 @@ PlayerTab:CreateSlider({
 })
 
 PlayerTab:CreateSection("Movement & Defense")
-PlayerTab:CreateToggle({ Name = "God Mode", CurrentValue = false, Callback = function(V) GodMode_Enabled = V; NotifyToggle("God Mode", V) end })
+PlayerTab:CreateToggle({ 
+    Name = "God Mode", 
+    CurrentValue = false, 
+    Callback = function(V) 
+        GodMode_Enabled = V
+        if V then
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum.Health = hum.MaxHealth
+                    SetStaminaFull(hum)
+                end
+            end
+        end
+        NotifyToggle("God Mode", V)
+    end 
+})
 PlayerTab:CreateToggle({ Name = "Noclip", CurrentValue = false, Callback = function(V) Noclip_Enabled = V; NotifyToggle("Noclip", V) end })
 PlayerTab:CreateToggle({ Name = "Infinite Jump", CurrentValue = false, Callback = function(V) InfJump_Enabled = V; NotifyToggle("Infinite Jump", V) end })
 
