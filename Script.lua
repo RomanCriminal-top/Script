@@ -292,7 +292,19 @@ RunService.RenderStepped:Connect(function()
         local hum = char:FindFirstChildOfClass("Humanoid")
         if hum then
             if Speed_Enabled then hum.WalkSpeed = WalkSpeed_Value end
-            if GodMode_Enabled then hum.Health = hum.MaxHealth end
+            if GodMode_Enabled then 
+    hum.Health = hum.MaxHealth
+    if char:FindFirstChild("Stamina") then
+        char.Stamina.Value = char.Stamina.MaxValue
+    elseif hum:FindFirstChild("Stamina") then
+        hum.Stamina.Value = hum.Stamina.MaxValue
+    end
+    if char:FindFirstChild("Energy") then
+        char.Energy.Value = char.Energy.MaxValue
+    elseif hum:FindFirstChild("Energy") then
+        hum.Energy.Value = hum.Energy.MaxValue
+    end
+            end
             if Jump_Enabled then hum.JumpPower = JumpPower_Value hum.UseJumpPower = true end
         end
     end
